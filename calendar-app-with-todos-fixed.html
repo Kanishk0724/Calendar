@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar App by Kanishk</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f5f7fa;
+            padding: 20px;
+        }
+        
+        .app-container {
+            display: flex;
+            width: 100%;
+            max-width: 1000px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .calendar-container {
+            flex: 1;
+            min-width: 320px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+            padding: 20px;
+        }
+        
+        .sidebar {
+            flex: 1;
+            min-width: 320px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .events-container, .todo-container {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+            padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 0;
+            margin-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 1.45rem;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .section-header {
+            font-size: 1.2rem;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .header .icons {
+            display: flex;
+        }
+        
+        .header .icons span {
+            height: 38px;
+            width: 38px;
+            margin: 0 1px;
+            cursor: pointer;
+            text-align: center;
+            line-height: 38px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            font-size: 1.2rem;
+            transition: background-color 0.2s ease;
+        }
+        
+        .header .icons span:hover {
+            background-color: #e6e6e6;
+        }
+        
+        .calendar {
+            width: 100%;
+        }
+        
+        .weeks {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .weeks li {
+            list-style: none;
+            width: calc(100% / 7);
+            text-align: center;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .days {
+            display: flex;
+            flex-wrap: wrap;
+        }
+        
+        .days li {
+            list-style: none;
+            width: calc(100% / 7);
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            margin-top: 15px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: #555;
+            height: 40px;
+            line-height: 40px;
+        }
+        
+        .days li.inactive {
+            color: #aaa;
+        }
+        
+        .days li.active {
+            color: #fff;
+        }
+        
+        .days li.selected {
+            color: #fff;
+        }
+        
+        .days li.has-event::after {
+            content: "";
+            position: absolute;
+            bottom: 7px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #ff5722;
+        }
+        
+        .days li::before {
+            position: absolute;
+            content: "";
+            height: 35px;
+            width: 35px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            z-index: -1;
+        }
+        
+        .days li.active::before {
+            background-color: #4070f4;
+        }
+        
+        .days li.selected::before {
+            background-color: #2d5cf6;
+        }
+        
+        .days li:not(.active):hover::before {
+            background-color: #f0f0f0;
+        }
+        
+        .credits {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #777;
+        }
+        
+        .event-form, .todo-form {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        
+        .event-form input, .todo-form input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px 0 0 4px;
+            outline: none;
+        }
+        
+        .event-form button, .todo-form button {
+            padding: 10px 15px;
+            background: #4070f4;
+            color: white;
+            border: none;
+            border-radius: 0 4px 4px 0;
+            cursor: pointer;
+        }
+        
+        .event-form button:hover, .todo-form button:hover {
+            background: #2d5cf6;
+        }
+        
+        .event-list, .todo-list {
+            list-style: none;
+        }
+        
+        .event-item, .todo-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .event-item:last-child, .todo-item:last-child {
+            border-bottom: none;
+        }
+        
+        .event-actions, .todo-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .event-actions button, .todo-actions button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #555;
+            font-size: 0.9rem;
+        }
+        
+        .event-actions .delete-btn, .todo-actions .delete-btn {
+            color: #ff5722;
+        }
+        
+        .event-date {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 3px;
+        }
+        
+        .todo-item.completed .todo-text {
+            text-decoration: line-through;
+            color: #999;
+        }
+        
+        .no-events, .no-todos {
+            color: #999;
+            text-align: center;
+            padding: 10px;
+        }
+        
+        .selected-date {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            color: #4070f4;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="calendar-container">
+            <div class="header">
+                <h1></h1>
+                <div class="icons">
+                    <span id="prev">&#8592;</span>
+                    <span id="next">&#8594;</span>
+                </div>
+            </div>
+            <div class="calendar">
+                <ul class="weeks">
+                    <li>Sun</li>
+                    <li>Mon</li>
+                    <li>Tue</li>
+                    <li>Wed</li>
+                    <li>Thu</li>
+                    <li>Fri</li>
+                    <li>Sat</li>
+                </ul>
+                <ul class="days"></ul>
+            </div>
+            <div class="credits">
+                Created by Kanishk
+            </div>
+        </div>
+        
+        <div class="sidebar">
+            <div class="events-container">
+                <h2 class="section-header">Events</h2>
+                <div class="selected-date" id="selected-date">Select a date to add events</div>
+                <div class="event-form">
+                    <input type="text" id="event-input" placeholder="Add new event..." disabled>
+                    <button id="add-event" disabled>Add</button>
+                </div>
+                <ul class="event-list" id="event-list">
+                    <li class="no-events">No events to display</li>
+                </ul>
+            </div>
+            
+            <div class="todo-container">
+                <h2 class="section-header">To-Do List</h2>
+                <div class="todo-form">
+                    <input type="text" id="todo-input" placeholder="Add new task...">
+                    <button id="add-todo">Add</button>
+                </div>
+                <ul class="todo-list" id="todo-list">
+                    <li class="no-todos">No tasks to display</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Calendar elements
+            const daysTag = document.querySelector(".days");
+            const currentDate = document.querySelector(".header h1");
+            const prevNextIcon = document.querySelectorAll(".icons span");
+            
+            // Getting new date, current year and month
+            let date = new Date();
+            let currYear = date.getFullYear();
+            let currMonth = date.getMonth();
+            let selectedDate = null;
+            
+            // Event and Todo elements
+            const selectedDateElement = document.getElementById("selected-date");
+            const eventInput = document.getElementById("event-input");
+            const addEventBtn = document.getElementById("add-event");
+            const eventList = document.getElementById("event-list");
+            const todoInput = document.getElementById("todo-input");
+            const addTodoBtn = document.getElementById("add-todo");
+            const todoList = document.getElementById("todo-list");
+            
+            // Storage for events and todos (in-memory only, no localStorage)
+            let events = {};
+            let todos = [];
+            
+            // Storing full names of all months in array
+            const months = ["January", "February", "March", "April", "May", "June", "July",
+                          "August", "September", "October", "November", "December"];
+            
+            // Calendar rendering
+            const renderCalendar = () => {
+                // Getting first day of month
+                let firstDayofMonth = new Date(currYear, currMonth, 1).getDay();
+                // Getting last date of month
+                let lastDateofMonth = new Date(currYear, currMonth + 1, 0).getDate();
+                // Getting last day of month
+                let lastDayofMonth = new Date(currYear, currMonth, lastDateofMonth).getDay();
+                // Getting last date of previous month
+                let lastDateofLastMonth = new Date(currYear, currMonth, 0).getDate();
+                
+                let liTag = "";
+                
+                // Creating li of previous month last days
+                for (let i = firstDayofMonth; i > 0; i--) {
+                    liTag += `<li class="inactive">${lastDateofLastMonth - i + 1}</li>`;
+                }
+                
+                // Creating li of all days of current month
+                for (let i = 1; i <= lastDateofMonth; i++) {
+                    // Adding active class to li if the current day, month, and year matched
+                    let isToday = i === date.getDate() && currMonth === date.getMonth() 
+                                 && currYear === date.getFullYear() ? "active" : "";
+                    
+                    // Check if date has events
+                    const dateStr = `${currYear}-${currMonth+1}-${i}`;
+                    const hasEvent = events[dateStr] && events[dateStr].length > 0 ? "has-event" : "";
+                    
+                    // Check if date is selected
+                    let isSelected = selectedDate && i === selectedDate.getDate() && 
+                                   currMonth === selectedDate.getMonth() && 
+                                   currYear === selectedDate.getFullYear() ? "selected" : "";
+                    
+                    liTag += `<li class="${isToday} ${hasEvent} ${isSelected}">${i}</li>`;
+                }
+                
+                // Creating li of next month first days
+                for (let i = lastDayofMonth; i < 6; i++) {
+                    liTag += `<li class="inactive">${i - lastDayofMonth + 1}</li>`;
+                }
+                
+                currentDate.innerText = `${months[currMonth]} ${currYear}`;
+                daysTag.innerHTML = liTag;
+                
+                // Add click event to days after rendering
+                attachDayClickEvents();
+            };
+            
+            // Attach click events to calendar days
+            const attachDayClickEvents = () => {
+                const dayElements = document.querySelectorAll(".days li:not(.inactive)");
+                dayElements.forEach(day => {
+                    day.addEventListener("click", () => {
+                        // Remove selected class from previously selected day
+                        document.querySelectorAll(".days li.selected").forEach(selected => {
+                            selected.classList.remove("selected");
+                        });
+                        
+                        // Add selected class to clicked day
+                        day.classList.add("selected");
+                        
+                        // Update selected date
+                        selectedDate = new Date(currYear, currMonth, parseInt(day.innerText));
+                        selectedDateElement.innerText = `${months[currMonth]} ${day.innerText}, ${currYear}`;
+                        
+                        // Enable event input and button
+                        eventInput.disabled = false;
+                        addEventBtn.disabled = false;
+                        
+                        // Display events for selected date
+                        displayEvents();
+                    });
+                });
+            };
+            
+            // Display events for selected date
+            const displayEvents = () => {
+                if (!selectedDate) return;
+                
+                const dateStr = `${selectedDate.getFullYear()}-${selectedDate.getMonth()+1}-${selectedDate.getDate()}`;
+                const dateEvents = events[dateStr] || [];
+                
+                if (dateEvents.length === 0) {
+                    eventList.innerHTML = '<li class="no-events">No events for this date</li>';
+                } else {
+                    eventList.innerHTML = '';
+                    dateEvents.forEach((event, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'event-item';
+                        li.innerHTML = `
+                            <div>
+                                <div class="event-text">${event.text}</div>
+                                <div class="event-date">${event.time || ''}</div>
+                            </div>
+                            <div class="event-actions">
+                                <button class="delete-btn" data-index="${index}">Delete</button>
+                            </div>
+                        `;
+                        eventList.appendChild(li);
+                    });
+                    
+                    // Add delete event listeners
+                    document.querySelectorAll('.event-actions .delete-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const index = parseInt(btn.getAttribute('data-index'));
+                            deleteEvent(index);
+                        });
+                    });
+                }
+            };
+            
+            // Display todos
+            const displayTodos = () => {
+                if (todos.length === 0) {
+                    todoList.innerHTML = '<li class="no-todos">No tasks to display</li>';
+                } else {
+                    todoList.innerHTML = '';
+                    todos.forEach((todo, index) => {
+                        const li = document.createElement('li');
+                        li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+                        li.innerHTML = `
+                            <div class="todo-text">${todo.text}</div>
+                            <div class="todo-actions">
+                                <button class="toggle-btn" data-index="${index}">${todo.completed ? 'Undo' : 'Complete'}</button>
+                                <button class="delete-btn" data-index="${index}">Delete</button>
+                            </div>
+                        `;
+                        todoList.appendChild(li);
+                    });
+                    
+                    // Add toggle and delete event listeners
+                    document.querySelectorAll('.todo-actions .toggle-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const index = parseInt(btn.getAttribute('data-index'));
+                            toggleTodo(index);
+                        });
+                    });
+                    
+                    document.querySelectorAll('.todo-actions .delete-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const index = parseInt(btn.getAttribute('data-index'));
+                            deleteTodo(index);
+                        });
+                    });
+                }
+            };
+            
+            // Add event
+            const addEvent = () => {
+                if (!selectedDate) return;
+                
+                const eventText = eventInput.value.trim();
+                if (eventText === '') return;
+                
+                const dateStr = `${selectedDate.getFullYear()}-${selectedDate.getMonth()+1}-${selectedDate.getDate()}`;
+                
+                if (!events[dateStr]) {
+                    events[dateStr] = [];
+                }
+                
+                events[dateStr].push({
+                    text: eventText,
+                    time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                });
+                
+                // Clear input
+                eventInput.value = '';
+                
+                // Update UI
+                displayEvents();
+                renderCalendar(); // Re-render to show event indicators
+            };
+            
+            // Delete event
+            const deleteEvent = (index) => {
+                if (!selectedDate) return;
+                
+                const dateStr = `${selectedDate.getFullYear()}-${selectedDate.getMonth()+1}-${selectedDate.getDate()}`;
+                
+                if (events[dateStr]) {
+                    events[dateStr].splice(index, 1);
+                    
+                    // Remove date key if no events
+                    if (events[dateStr].length === 0) {
+                        delete events[dateStr];
+                    }
+                    
+                    // Update UI
+                    displayEvents();
+                    renderCalendar(); // Re-render to update event indicators
+                }
+            };
+            
+            // Add todo
+            const addTodo = () => {
+                const todoText = todoInput.value.trim();
+                if (todoText === '') return;
+                
+                todos.push({
+                    text: todoText,
+                    completed: false
+                });
+                
+                // Clear input
+                todoInput.value = '';
+                
+                // Update UI
+                displayTodos();
+            };
+            
+            // Toggle todo completion
+            const toggleTodo = (index) => {
+                todos[index].completed = !todos[index].completed;
+                
+                // Update UI
+                displayTodos();
+            };
+            
+            // Delete todo
+            const deleteTodo = (index) => {
+                todos.splice(index, 1);
+                
+                // Update UI
+                displayTodos();
+            };
+            
+            // Initialize calendar
+            renderCalendar();
+            displayTodos();
+            
+            // Event listeners for month navigation
+            prevNextIcon.forEach(icon => {
+                icon.addEventListener("click", () => {
+                    // If clicked icon is previous icon then decrement current month by 1 else increment it by 1
+                    currMonth = icon.id === "prev" ? currMonth - 1 : currMonth + 1;
+                    
+                    if (currMonth < 0 || currMonth > 11) {
+                        // Creating a new date of current year & month and pass it as date value
+                        date = new Date(currYear, currMonth, new Date().getDate());
+                        currYear = date.getFullYear();
+                        currMonth = date.getMonth();
+                    } else {
+                        date = new Date();
+                    }
+                    renderCalendar();
+                });
+            });
+            
+            // Event listeners for adding events and todos
+            addEventBtn.addEventListener('click', addEvent);
+            eventInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addEvent();
+            });
+            
+            addTodoBtn.addEventListener('click', addTodo);
+            todoInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addTodo();
+            });
+
+            // Add some sample events and todos
+            todos.push({ text: "Complete project", completed: false });
+            todos.push({ text: "Buy groceries", completed: true });
+            displayTodos();
+            
+            // Add sample event for today
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${today.getMonth()+1}-${today.getDate()}`;
+            events[todayStr] = [
+                { text: "Team meeting", time: "10:00 AM" },
+                { text: "Lunch with client", time: "12:30 PM" }
+            ];
+        });
+    </script>
+</body>
+</html>
